@@ -11,45 +11,39 @@ class Task:
 
     def populateDefaultValues(self):
         self.description = ""
-        self.pending_prerequisites = {}  # indexed by uid
+        self.pending_prerequisites = set()  # uids
+        self.completed = False  # whether the work for this Task is complete
 
         # TODO make these sets
-        self.completed_prerequisites = []
-        self.postrequisites = []
+        self.completed_prerequisites = set()
+        self.postrequisites = set()
     
+    # Unique ID accessor
+    def get_uid(self):
+        return self.uid
+
+    # Prefer this function.
     def add_prerequisite(self, prereq):
-        self.pending_prerequisites[prereq.uid] = prereq
+        self.pending_prerequisites.add(prereq.get_uid())
         prereq.add_postrequisite(self)
     
-    # Needed for bidirectionality
+    # Needed for bidirectionality -- do not call though
     def add_postrequisite(self, postreq):
-        self.postrequisites.append(postreq)
+        self.postrequisites.add(postreq.get_uid())
     
     # PRIVATE FUNCTION DO NOT CALL
     def complete_prerequisite(self, prereq):
-        del self.pending_prerequisites[prereq.uid]
-        self.completed_prerequisites.append(prereq)
+        self.pending_prerequisites.remove(prereq.get_uid())
+        self.completed_prerequisites.add(prereq.get_uid())
 
-    def can_complete(self) -> bool:
-        return len(self.pending_prerequisites.keys()) == 0
+    def no_prereqs(self) -> bool:
+        return len(self.pending_prerequisites) == 0
+
+    def get_completed(self) -> bool:
+        return self.completed
     
-    def complete(self) -> bool:
-        if not self.can_complete():
-            return False
-        for req in self.postrequisites:
-            # print("completing prerequisite{0}".format(req.uid))
-            req.complete_prerequisite(self)
-        return True
-
-    # Returns a status bool, false if it was not completed successfully
-    def try_autocomplete(self) -> bool:
-        if not self.can_complete():
-            return False
-        for req in self.postrequisites:
-            # print("completing prerequisite{0}".format(req.uid))
-            req.complete_prerequisite(self)
-            req.try_autocomplete()
-        return True
+    def set_completed(self):
+        self.completed = True
 
     def __eq__(self, other):
         return self.uid == other.uid
