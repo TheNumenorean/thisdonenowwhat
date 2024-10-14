@@ -33,13 +33,22 @@ class Task:
     def can_complete(self) -> bool:
         return len(self.pending_prerequisites.keys()) == 0
     
-    # Returns a status bool, false if it was not completed successfully
     def complete(self) -> bool:
         if not self.can_complete():
             return False
         for req in self.postrequisites:
             # print("completing prerequisite{0}".format(req.uid))
             req.complete_prerequisite(self)
+        return True
+
+    # Returns a status bool, false if it was not completed successfully
+    def try_autocomplete(self) -> bool:
+        if not self.can_complete():
+            return False
+        for req in self.postrequisites:
+            # print("completing prerequisite{0}".format(req.uid))
+            req.complete_prerequisite(self)
+            req.try_autocomplete()
         return True
 
     def __eq__(self, other):
